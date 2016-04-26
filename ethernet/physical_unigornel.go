@@ -10,6 +10,8 @@ package ethernet
 import "C"
 import "unsafe"
 
+const maxEthPayloadSize = 1500
+
 type miniosNIC struct {
 	tx chan Packet
 	rx chan Packet
@@ -22,6 +24,7 @@ func NewNIC() NIC {
 	nic.tx = make(chan Packet)
 	nic.rx = make(chan Packet)
 	go nic.sendAll()
+	go nic.receiveAll()
 
 	return nic
 }
@@ -40,7 +43,7 @@ func (nic *miniosNIC) Send() chan<- Packet {
 }
 
 func (nic *miniosNIC) Receive() <-chan Packet {
-	panic("not implemented")
+	return nic.rx
 }
 
 func (nic *miniosNIC) GetMAC() MAC {
@@ -64,5 +67,30 @@ func (nic *miniosNIC) sendAll() {
 		}
 
 		C.send_packet(&packet)
+	}
+}
+
+func (nic *miniosNIC) receiveAll() {
+	for {
+		var packet C.struct_eth_packet
+		packet.payload = (*C.uchar)(C.malloc(C.size_t(maxEthPayloadSize)))
+		packet.payload_length = C.uint(maxEthPayloadSize)
+
+		i := C.receive_packet(&packet)
+		if i < -1 {
+			panic("could not receive packet")
+		}
+
+		var p Packet
+		for i := 0; i < 6; i++ {
+			p.Source[i] = byte(packet.source[i])
+			p.Destination[i] = byte(packet.destination[i])
+		}
+		p.EtherType = EtherType(packet.ether_type)
+		p.Payload = make([]byte, int(packet.payload_length))
+		C.memcpy(unsafe.Pointer(&p.Payload[0]), unsafe.Pointer(packet.payload), C.size_t(packet.payload_length))
+		C.free(unsafe.Pointer(packet.payload))
+
+		nic.rx <- p
 	}
 }
