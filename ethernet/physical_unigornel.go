@@ -15,6 +15,7 @@ const maxEthPayloadSize = 1500
 type miniosNIC struct {
 	tx chan Packet
 	rx chan Packet
+	done chan struct{}
 }
 
 // NewNIC creates a new NIC linked to the Mini-OS network.
@@ -23,6 +24,8 @@ func NewNIC() NIC {
 
 	nic.tx = make(chan Packet)
 	nic.rx = make(chan Packet)
+	nic.done = make(chan struct{})
+
 	go nic.sendAll()
 	go nic.receiveAll()
 
@@ -30,12 +33,8 @@ func NewNIC() NIC {
 }
 
 func (nic *miniosNIC) Close() {
-	if nic.tx == nil || nic.rx == nil {
-		panic("NIC not started")
-	}
-
 	close(nic.tx)
-	close(nic.rx)
+	close(nic.done)
 }
 
 func (nic *miniosNIC) Send() chan<- Packet {
@@ -91,6 +90,11 @@ func (nic *miniosNIC) receiveAll() {
 		C.memcpy(unsafe.Pointer(&p.Payload[0]), unsafe.Pointer(packet.payload), C.size_t(packet.payload_length))
 		C.free(unsafe.Pointer(packet.payload))
 
-		nic.rx <- p
+		select {
+		case nic.rx <- p:
+		case <-nic.done:
+			close(nic.rx)
+			return
+		}
 	}
 }
