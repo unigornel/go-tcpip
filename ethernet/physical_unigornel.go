@@ -77,7 +77,7 @@ func (nic *miniosNIC) receiveAll() {
 		packet.payload_length = C.uint(maxEthPayloadSize)
 
 		i := C.receive_packet(&packet)
-		if i < -1 {
+		if i != 0 {
 			panic("could not receive packet")
 		}
 
