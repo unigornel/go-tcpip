@@ -18,6 +18,9 @@ type EtherType uint16
 const (
 	// EtherTypeIPv4 is the EtherType for IPv4 frames.
 	EtherTypeIPv4 = 0x8000
+
+	// EtherTypeARP is the EtherType for ARP frames.
+	EtherTypeARP = 0x0806
 )
 
 // IsLength determines if the EtherType field contains a frame type or the
