@@ -12,7 +12,7 @@ type Demux struct {
 }
 
 // NewDemux creates an Ethernet demultiplexer with a default output function.
-func NewDemux(nic NIC, defaultOutput DemuxOutput) *Demux {
+func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
 	demux := &Demux{
 		outputs: make(map[EtherType]DemuxOutput),
 	}
@@ -34,8 +34,8 @@ func (demux *Demux) SetOutput(etherType EtherType, output DemuxOutput) {
 	demux.RWMutex.Unlock()
 }
 
-func (demux *Demux) receiveAll(nic NIC) {
-	for p := range nic.Receive() {
+func (demux *Demux) receiveAll(incoming <-chan Packet) {
+	for p := range incoming {
 
 		demux.RWMutex.RLock()
 		output, ok := demux.outputs[p.EtherType]
