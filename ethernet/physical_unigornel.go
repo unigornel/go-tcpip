@@ -13,8 +13,8 @@ import "unsafe"
 const maxEthPayloadSize = 1500
 
 type miniosNIC struct {
-	tx chan Packet
-	rx chan Packet
+	tx   chan Packet
+	rx   chan Packet
 	done chan struct{}
 }
 
