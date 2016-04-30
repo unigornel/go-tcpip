@@ -1,9 +1,20 @@
 package ethernet
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 // DemuxOutput is a function that accepts incoming Ethernet packets.
 type DemuxOutput func(Packet)
+
+// DemuxDiscard is an output function that discards the frame.
+func DemuxDiscard(Packet) {}
+
+// DemuxLog is an output function that prints the logs the frame.
+func DemuxLog(packet Packet) {
+	log.Println("Received an Ethernet frame:", packet)
+}
 
 // Demux will demultiplex incoming Ethernet packets.
 type Demux struct {
