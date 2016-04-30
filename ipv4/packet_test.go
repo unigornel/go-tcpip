@@ -202,3 +202,86 @@ func TestHeaderCheck(t *testing.T) {
 		assert.Equal(t, ErrInvalidChecksum, test.Header.Check(), "Header check %d failed", i)
 	}
 }
+
+var packets = []struct {
+	HeaderBytes  string
+	PayloadBytes string
+	Packet       Packet
+}{
+	{
+		"450000349c8340003e0656dbc0a86401c0a86413",
+		"d66a00163a727ee96ca6457a80100ff0564b00000101080a2456e68311fa684b",
+		Packet{
+			Header: Header{
+				Version:        4,
+				IHL:            5,
+				ToS:            0,
+				TotalLength:    52,
+				Identification: 40067,
+				Flags:          0x02,
+				FragmentOffset: 0,
+				TTL:            62,
+				Protocol:       6,
+				Checksum:       0x56db,
+				Source:         [4]byte{192, 168, 100, 1},
+				Destination:    [4]byte{192, 168, 100, 19},
+			},
+		},
+	},
+}
+
+func TestPacket(t *testing.T) {
+	for i, test := range packets {
+		payload, err := hex.DecodeString(test.PayloadBytes)
+		assert.Nil(t, err)
+		test.Packet.Payload = payload
+
+		raw, err := hex.DecodeString(test.HeaderBytes + test.PayloadBytes)
+		assert.Nil(t, err)
+		b := bytes.NewReader(raw)
+
+		p, err := NewPacket(b)
+		assert.Nil(t, err, "Could not read packet %d", i)
+		assert.True(
+			t,
+			reflect.DeepEqual(test.Packet, p),
+			"Could not read packet %d: %v != %v",
+			i, test.Packet, p,
+		)
+
+		w := bytes.NewBuffer(nil)
+		err = p.Write(w)
+		assert.Nil(t, err, "Could not write packet %d", i)
+		assert.True(
+			t,
+			reflect.DeepEqual(raw, w.Bytes()),
+			"Could not write packet %d", i,
+		)
+	}
+
+	// With an invalid reader.
+	{
+		_, err := NewPacket(testutils.NewErrorReader())
+		assert.Equal(t, testutils.ErrorReaderDefaultError, err)
+	}
+
+	// With an invalid header.
+	{
+		test := packets[0]
+		test.Packet.Header.Checksum = ^test.Packet.Header.Checksum
+
+		b := bytes.NewBuffer(nil)
+		err := test.Packet.Write(b)
+		assert.Nil(t, err)
+
+		_, err = NewPacket(b)
+		assert.Equal(t, ErrInvalidChecksum, err)
+	}
+
+	// With an invalid writer.
+	{
+		test := packets[0]
+		err := test.Packet.Write(testutils.NewErrorWriter())
+		assert.Equal(t, testutils.ErrorWriterDefaultError, err)
+	}
+}

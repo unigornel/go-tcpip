@@ -188,3 +188,38 @@ func (h RawHeader) Header() Header {
 	header.Destination = h.Destination
 	return header
 }
+
+// Packet is an IPv4 packet.
+type Packet struct {
+	Header
+	Payload []byte
+}
+
+// NewPacket will read a packet from a reader.
+//
+// The header will be checked using the Check() function. Only valid packets
+// will be returned, unless err is not nil.
+func NewPacket(r io.Reader) (p Packet, err error) {
+	h, err := NewHeader(r)
+	if err != nil {
+		return
+	}
+	p.Header = h
+
+	if err = p.Header.Check(); err != nil {
+		return
+	}
+	payloadLength := int(p.Header.TotalLength) - int(p.Header.IHL)*4
+	p.Payload = make([]byte, payloadLength)
+	_, err = r.Read(p.Payload)
+	return
+}
+
+// Write will write a packet to a writer.
+func (p Packet) Write(w io.Writer) error {
+	if err := p.Header.Write(w); err != nil {
+		return err
+	}
+	_, err := w.Write(p.Payload)
+	return err
+}
