@@ -53,7 +53,7 @@ func (nic *miniosNIC) sendAll() {
 	for p := range nic.tx {
 		var packet C.struct_eth_packet
 		for i := 0; i < 6; i++ {
-			packet.destination[i] = C.char(p.Destination[i])
+			packet.destination[i] = C.uchar(p.Destination[i])
 		}
 		packet.ether_type = C.uint16_t(p.EtherType)
 		packet.payload_length = C.uint(len(p.Payload))
