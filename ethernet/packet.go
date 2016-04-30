@@ -15,6 +15,11 @@ var Broadcast = MAC([6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})
 // EtherType is either the Ethernet packet type or the Eternet packet length.
 type EtherType uint16
 
+const (
+	// EtherTypeIPv4 is the EtherType for IPv4 frames.
+	EtherTypeIPv4 = 0x8000
+)
+
 // IsLength determines if the EtherType field contains a frame type or the
 // length of the frame payload.
 func (etherType EtherType) IsLength() bool {
