@@ -20,6 +20,8 @@ func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
 	// IPv4 protocol number 255 is officially reserved, will is it.
 	demux.outputs[255] = defaultOutput
 
+	go demux.receiveAll(incoming)
+
 	return demux
 }
 
