@@ -19,6 +19,10 @@ var (
 	// ErrInvalidChecksum is a check error returned when header checksum is
 	// incorrect.
 	ErrInvalidChecksum = errors.New("Checksum field is incorrect")
+
+	// ErrInvalidTotalLength is an error returned when the packet length is
+	// too small.
+	ErrInvalidTotalLength = errors.New("TotalLength field is too small")
 )
 
 // Address is an IPv4 address.
@@ -110,10 +114,13 @@ func (h Header) CalculateChecksum() uint16 {
 // The function fails if the checksum is not correct, or if the IHL field does
 // not match the length of the Options byte slice.
 //
-// This functions can return ErrInvalidIHL or ErrInvalidChecksum.
+// This functions can return ErrInvalidIHL, ErrInvalidChecksum or
+// ErrInvalidTotalLength.
 func (h Header) Check() error {
 	if len(h.Options)%4 != 0 || int(h.IHL) != 5+len(h.Options)/4 {
 		return ErrInvalidIHL
+	} else if int(h.IHL)*4 > int(h.TotalLength) {
+		return ErrInvalidTotalLength
 	} else if h.CalculateChecksum() != h.Checksum {
 		return ErrInvalidChecksum
 	}

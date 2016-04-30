@@ -172,7 +172,7 @@ func TestHeaderCheck(t *testing.T) {
 	}
 
 	validIHL := []Header{
-		{IHL: 6, Options: []byte{0x1, 0x2, 0x3, 0x4}},
+		{IHL: 6, TotalLength: 100, Options: []byte{0x1, 0x2, 0x3, 0x4}},
 	}
 	for i, test := range validIHL {
 		test.Checksum = test.CalculateChecksum()
@@ -180,13 +180,21 @@ func TestHeaderCheck(t *testing.T) {
 	}
 
 	invalidIHL := []Header{
-		{IHL: 6, Options: nil},
-		{IHL: 7, Options: []byte{0x1, 0x2, 0x3, 0x4}},
-		{IHL: 6, Options: []byte{0x1}},
+		{IHL: 6, TotalLength: 100, Options: nil},
+		{IHL: 7, TotalLength: 100, Options: []byte{0x1, 0x2, 0x3, 0x4}},
+		{IHL: 6, TotalLength: 100, Options: []byte{0x1}},
 	}
 	for i, test := range invalidIHL {
 		test.Checksum = test.CalculateChecksum()
 		assert.Equal(t, ErrInvalidIHL, test.Check(), "Header check %d failed", i)
+	}
+
+	invalidTotalLength := []Header{
+		{IHL: 6, TotalLength: 20, Options: []byte{0x1, 0x2, 0x3, 0x4}},
+	}
+	for i, test := range invalidTotalLength {
+		test.Checksum = test.CalculateChecksum()
+		assert.Equal(t, ErrInvalidTotalLength, test.Check(), "Header check %d failed", i)
 	}
 
 	for i, test := range headers {
