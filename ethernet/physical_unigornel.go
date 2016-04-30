@@ -46,7 +46,16 @@ func (nic *miniosNIC) Receive() <-chan Packet {
 }
 
 func (nic *miniosNIC) GetMAC() MAC {
-	panic("not implemented")
+	buffer := (*C.uchar)(C.malloc(C.size_t(6)))
+	defer C.free(unsafe.Pointer(buffer))
+	C.get_mac_address(buffer)
+
+	s := []byte(C.GoStringN((*C.char)(unsafe.Pointer(buffer)), 6))
+	var mac MAC
+	for i := 0; i < 6; i++ {
+		mac[i] = s[i]
+	}
+	return mac
 }
 
 func (nic *miniosNIC) sendAll() {
