@@ -49,6 +49,15 @@ func (a Address) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", a[0], a[1], a[2], a[3])
 }
 
+// Bytes copies an address to a new byte slice.
+func (a Address) Bytes() []byte {
+	s := make([]byte, len(a))
+	for i, b := range a {
+		s[i] = b
+	}
+	return s
+}
+
 // Protocol is an IPv4 protocol.
 type Protocol uint8
 
