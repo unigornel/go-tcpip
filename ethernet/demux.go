@@ -29,7 +29,7 @@ func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
 	}
 
 	demux.outputs[EtherType(0)] = defaultOutput
-	go demux.receiveAll(nic)
+	go demux.receiveAll(incoming)
 
 	return demux
 }
