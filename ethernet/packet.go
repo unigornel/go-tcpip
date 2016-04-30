@@ -15,6 +15,12 @@ var Broadcast = MAC([6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})
 // EtherType is either the Ethernet packet type or the Eternet packet length.
 type EtherType uint16
 
+// IsLength determines if the EtherType field contains a frame type or the
+// length of the frame payload.
+func (etherType EtherType) IsLength() bool {
+	return etherType <= 1500
+}
+
 // Packet is an Ethernet packet.
 type Packet struct {
 	Destination MAC
