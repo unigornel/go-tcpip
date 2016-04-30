@@ -1,6 +1,10 @@
 package ethernet
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"io"
+)
 
 // MAC is a 48-bit long MAC address.
 type MAC [6]byte
@@ -43,4 +47,20 @@ func (packet Packet) String() string {
 		packet.Source, packet.Destination,
 		packet.EtherType, packet.Payload,
 	)
+}
+
+// PayloadWriter can write an Ethernet packet payload.
+type PayloadWriter interface {
+	Write(io.Writer) error
+}
+
+// WritePayload will set the payload using a PaylaodWriter.
+//
+// If the PayloadWriter returns an error, this function panics.
+func (packet *Packet) WritePayload(writer PayloadWriter) {
+	b := bytes.NewBuffer(nil)
+	if err := writer.Write(b); err != nil {
+		panic(err)
+	}
+	packet.Payload = b.Bytes()
 }
