@@ -44,6 +44,6 @@ func (demux *Demux) receiveAll(incoming <-chan Packet) {
 		}
 		demux.RWMutex.RUnlock()
 
-		output(p)
+		go output(p)
 	}
 }
