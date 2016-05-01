@@ -30,6 +30,8 @@ func NewLayer(address Address, out chan<- ethernet.Packet) Layer {
 		rx:      make(chan Packet),
 	}
 
+	go layer.sendAll(out)
+
 	return layer
 }
 
