@@ -18,14 +18,16 @@ type Layer interface {
 
 type defaultLayer struct {
 	address Address
+	arp     ARP
 	tx      chan Packet
 	rx      chan Packet
 }
 
 // NewLayer creates a new instance of the default IPv4 layer.
-func NewLayer(address Address, out chan<- ethernet.Packet) Layer {
+func NewLayer(address Address, arp ARP, out chan<- ethernet.Packet) Layer {
 	layer := &defaultLayer{
 		address: address,
+		arp:     arp,
 		tx:      make(chan Packet),
 		rx:      make(chan Packet),
 	}
@@ -65,7 +67,21 @@ func (layer *defaultLayer) Close() {
 }
 
 func (layer *defaultLayer) sendAll(out chan<- ethernet.Packet) {
-	for _ = range layer.tx {
-		panic("missing arp")
+	for packet := range layer.tx {
+		packet.Header.Source = layer.address
+		packet.Header.Checksum = packet.CalculateChecksum()
+
+		mac, err := layer.arp.Resolve(packet.Header.Destination)
+		if err != nil {
+			log.Println("No route to host", packet.Header.Destination)
+			continue
+		}
+
+		p := ethernet.Packet{
+			Destination: mac,
+			EtherType:   ethernet.EtherTypeIPv4,
+		}
+		p.WritePayload(packet)
+		out <- p
 	}
 }
