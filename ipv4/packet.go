@@ -61,6 +61,11 @@ func (a Address) Bytes() []byte {
 // Protocol is an IPv4 protocol.
 type Protocol uint8
 
+const (
+	// ProtocolICMP is used for the ICMP protocol.
+	ProtocolICMP = 1
+)
+
 // Header is the logical version of an IPv4 header.
 type Header struct {
 	Version        uint8
