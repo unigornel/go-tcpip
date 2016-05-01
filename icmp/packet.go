@@ -141,7 +141,7 @@ func NewEcho(r io.Reader) (data Echo, err error) {
 
 // Write the echo request/reply data to the writer.
 func (d Echo) Write(w io.Writer) error {
-	if err := binary.Write(w, binary.BigEndian, &d); err != nil {
+	if err := binary.Write(w, binary.BigEndian, &d.Header); err != nil {
 		return err
 	}
 	_, err := w.Write(d.Payload)
