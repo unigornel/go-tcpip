@@ -1,9 +1,20 @@
 package ipv4
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 // DemuxOutput is a function that accepts incoming IPv4 packets.
 type DemuxOutput func(Packet)
+
+// DemuxDiscard is an output function that discards the packet.
+func DemuxDiscard(Packet) {}
+
+// DemuxLog is an output function that prints the logs the packet.
+func DemuxLog(packet Packet) {
+	log.Println("Received an IPv4 packet:", packet)
+}
 
 // Demux will demultiplex incoming IPv4 packets.
 type Demux interface {
