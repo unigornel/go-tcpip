@@ -47,6 +47,5 @@ func (icmp *defaultLayer) handleEchoRequest(source ipv4.Address, packet Packet) 
 	reply := NewEchoReply(data.Header.Identifier, data.Header.SequenceNumber, data.Payload)
 	p := ipv4.NewPacketTo(source, ipv4.ProtocolICMP, nil)
 	p.WritePayload(reply)
-	log.Println("Sending ICMP reply", p)
 	icmp.tx <- p
 }

@@ -187,7 +187,7 @@ func (arp *defaultARP) Resolve(address Address) (ethernet.MAC, error) {
 	if item != nil {
 		return item.(ethernet.MAC), nil
 	}
-	panic("not implemented")
+	return arp.arpResolve(address)
 }
 
 func (arp *defaultARP) arpResolve(address Address) (mac ethernet.MAC, err error) {
@@ -204,6 +204,7 @@ func (arp *defaultARP) arpResolve(address Address) (mac ethernet.MAC, err error)
 				timeout:  make(chan struct{}),
 			}
 			arp.requests[address] = pending
+			go arp.sendARPRequestAndNotify(pending, address)
 		}
 		arp.requestsLock.Unlock()
 	}
@@ -227,30 +228,28 @@ func (arp *defaultARP) arpResolve(address Address) (mac ethernet.MAC, err error)
 	return
 }
 
-func (arp *defaultARP) sendARPRequestAndNotify(pending pendingARPRequest, address Address) {
-	go func() {
-		p := ethernet.Packet{
-			Destination: ethernet.Broadcast,
-			EtherType:   ethernet.EtherTypeARP,
-		}
-		p.WritePayload(NewARPRequest(arp.sourceMAC, arp.sourceIP, address))
+func (arp *defaultARP) sendARPRequestAndNotify(pending *pendingARPRequest, address Address) {
+	p := ethernet.Packet{
+		Destination: ethernet.Broadcast,
+		EtherType:   ethernet.EtherTypeARP,
+	}
+	p.WritePayload(NewARPRequest(arp.sourceMAC, arp.sourceIP, address))
 
-		flag := false
-		for i := 0; i < arp.timeout; i++ {
-			arp.tx <- p
-			select {
-			case <-time.After(arp.queryInterval):
-				continue
-			case <-pending.gotReply:
-				flag = true
-				break
-			}
+	flag := false
+	for i := 0; i < arp.timeout; i++ {
+		arp.tx <- p
+		select {
+		case <-time.After(arp.queryInterval):
+			continue
+		case <-pending.gotReply:
+			flag = true
+			break
 		}
+	}
 
-		if !flag {
-			close(pending.timeout)
-		}
-	}()
+	if !flag {
+		close(pending.timeout)
+	}
 }
 
 func (arp *defaultARP) handleRequest(request ARPPacket) {
