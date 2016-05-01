@@ -21,7 +21,7 @@ type EtherType uint16
 
 const (
 	// EtherTypeIPv4 is the EtherType for IPv4 frames.
-	EtherTypeIPv4 = 0x8000
+	EtherTypeIPv4 = 0x0800
 
 	// EtherTypeARP is the EtherType for ARP frames.
 	EtherTypeARP = 0x0806
