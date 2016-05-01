@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
+	"sync/atomic"
 
 	"github.ugent.be/unigornel/go-tcpip"
 )
@@ -227,6 +229,29 @@ func NewPacket(r io.Reader) (p Packet, err error) {
 	p.Payload = make([]byte, payloadLength)
 	_, err = r.Read(p.Payload)
 	return
+}
+
+var identificationCounter = uint32(rand.Int())
+
+// NewDefaultPacket constructs a default IPv4 packet.
+func NewDefaultPacket() Packet {
+	ident := atomic.AddUint32(&identificationCounter, 1)
+	return Packet{
+		Header: Header{
+			Version: 4, IHL: 5, ToS: 0, TotalLength: 20, TTL: 64,
+			Identification: uint16(ident),
+		},
+	}
+}
+
+// NewPacketTo constructs a new packet with a destination.
+func NewPacketTo(to Address, proto Protocol, payload []byte) Packet {
+	p := NewDefaultPacket()
+	p.Header.Destination = to
+	p.Header.Protocol = proto
+	p.Header.TotalLength = uint16(20 + len(payload))
+	p.Payload = payload
+	return p
 }
 
 // Write will write a packet to a writer.
