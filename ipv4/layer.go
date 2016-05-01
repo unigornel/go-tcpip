@@ -12,7 +12,7 @@ type Layer interface {
 	Send() chan<- Packet
 	Receive() <-chan Packet
 	GetIP() Address
-	Bind(*ethernet.Demux)
+	Bind(ethernet.Demux)
 	Close()
 }
 
@@ -44,7 +44,7 @@ func (layer *defaultLayer) Receive() <-chan Packet {
 func (layer *defaultLayer) GetIP() Address {
 	return layer.address
 }
-func (layer *defaultLayer) Bind(demux *ethernet.Demux) {
+func (layer *defaultLayer) Bind(demux ethernet.Demux) {
 	demux.SetOutput(ethernet.EtherTypeIPv4, func(packet ethernet.Packet) {
 		r := bytes.NewReader(packet.Payload)
 		p, err := NewPacket(r)

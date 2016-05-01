@@ -17,14 +17,18 @@ func DemuxLog(packet Packet) {
 }
 
 // Demux will demultiplex incoming Ethernet packets.
-type Demux struct {
+type Demux interface {
+	SetOutput(EtherType, DemuxOutput)
+}
+
+type defaultDemux struct {
 	sync.RWMutex
 	outputs map[EtherType]DemuxOutput
 }
 
 // NewDemux creates an Ethernet demultiplexer with a default output function.
-func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
-	demux := &Demux{
+func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) Demux {
+	demux := &defaultDemux{
 		outputs: make(map[EtherType]DemuxOutput),
 	}
 
@@ -35,7 +39,7 @@ func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
 }
 
 // SetOutput sets an output function for a specific EtherType.
-func (demux *Demux) SetOutput(etherType EtherType, output DemuxOutput) {
+func (demux *defaultDemux) SetOutput(etherType EtherType, output DemuxOutput) {
 	if etherType.IsLength() {
 		panic("must be a true EtherType, not a payload length")
 	}
@@ -45,7 +49,7 @@ func (demux *Demux) SetOutput(etherType EtherType, output DemuxOutput) {
 	demux.RWMutex.Unlock()
 }
 
-func (demux *Demux) receiveAll(incoming <-chan Packet) {
+func (demux *defaultDemux) receiveAll(incoming <-chan Packet) {
 	for p := range incoming {
 
 		demux.RWMutex.RLock()

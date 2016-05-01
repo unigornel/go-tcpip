@@ -17,7 +17,7 @@ import (
 // ARP represents an ARP layer that can convert IPv4 addresses to Ethernet
 // addresses.
 type ARP interface {
-	Bind(*ethernet.Demux)
+	Bind(ethernet.Demux)
 	Resolve(address Address) (ethernet.MAC, error)
 }
 
@@ -162,7 +162,7 @@ func NewCustomARP(mac ethernet.MAC, ip Address, tx chan<- ethernet.Packet, expir
 	}
 }
 
-func (arp *defaultARP) Bind(demux *ethernet.Demux) {
+func (arp *defaultARP) Bind(demux ethernet.Demux) {
 	demux.SetOutput(ethernet.EtherTypeARP, func(packet ethernet.Packet) {
 		r := bytes.NewReader(packet.Payload)
 		p, err := NewARPPacket(r)

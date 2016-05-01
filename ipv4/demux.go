@@ -6,14 +6,18 @@ import "sync"
 type DemuxOutput func(Packet)
 
 // Demux will demultiplex incoming IPv4 packets.
-type Demux struct {
+type Demux interface {
+	SetOutput(Protocol, DemuxOutput)
+}
+
+type defaultDemux struct {
 	sync.RWMutex
 	outputs map[Protocol]DemuxOutput
 }
 
 // NewDemux creates an IPv4 demultiplexer with a default output function.
-func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
-	demux := &Demux{
+func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) Demux {
+	demux := &defaultDemux{
 		outputs: make(map[Protocol]DemuxOutput),
 	}
 
@@ -26,13 +30,13 @@ func NewDemux(incoming <-chan Packet, defaultOutput DemuxOutput) *Demux {
 }
 
 // SetOutput sets an output function for a specific IPv4 protocol.
-func (demux *Demux) SetOutput(protocol Protocol, output DemuxOutput) {
+func (demux *defaultDemux) SetOutput(protocol Protocol, output DemuxOutput) {
 	demux.RWMutex.Lock()
 	demux.outputs[protocol] = output
 	demux.RWMutex.Unlock()
 }
 
-func (demux *Demux) receiveAll(incoming <-chan Packet) {
+func (demux *defaultDemux) receiveAll(incoming <-chan Packet) {
 	for p := range incoming {
 		demux.RWMutex.RLock()
 		output, ok := demux.outputs[p.Protocol]
