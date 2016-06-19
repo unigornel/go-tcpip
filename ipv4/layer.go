@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.ugent.be/unigornel/go-tcpip/ethernet"
+	"github.com/unigornel/go-tcpip/ethernet"
 )
 
 // Layer is an IPv4 layer.

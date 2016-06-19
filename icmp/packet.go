@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.ugent.be/unigornel/go-tcpip"
+	"github.com/unigornel/go-tcpip"
 )
 
 // Type is the type of the ICMP packet.

@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-
-	"github.ugent.be/unigornel/go-tcpip/ethernet"
+	"github.com/unigornel/go-tcpip/ethernet"
 )
 
 // ARP represents an ARP layer that can convert IPv4 addresses to Ethernet

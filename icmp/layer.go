@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.ugent.be/unigornel/go-tcpip/ipv4"
+	"github.com/unigornel/go-tcpip/ipv4"
 )
 
 // Layer is an ICMP layer.

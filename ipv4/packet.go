@@ -10,7 +10,7 @@ import (
 	"net"
 	"sync/atomic"
 
-	"github.ugent.be/unigornel/go-tcpip"
+	"github.com/unigornel/go-tcpip"
 )
 
 var (
