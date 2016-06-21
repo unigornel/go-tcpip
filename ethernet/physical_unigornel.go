@@ -13,12 +13,6 @@ import (
 	"unsafe"
 )
 
-const (
-	ethHeaderSize     = 6 + 6 + 2
-	maxEthPayloadSize = 1500
-	maxEthPacketSize  = ethHeaderSize + maxEthPayloadSize
-)
-
 type miniosNIC struct {
 	tx   chan Packet
 	rx   chan Packet
@@ -87,21 +81,17 @@ func (nic *miniosNIC) sendAll() {
 
 func (nic *miniosNIC) receiveAll() {
 	for {
-		var packet Packet
-		data := make([]byte, maxEthPacketSize)
+		data := make([]byte, MaxPacketSize)
 
-		i := C.receive_packet(unsafe.Pointer(&data[0]), C.int64_t(maxEthPacketSize))
-		if i < ethHeaderSize {
+		i := C.receive_packet(unsafe.Pointer(&data[0]), C.int64_t(MaxPacketSize))
+		if i < 0 {
 			panic("could not receive packet")
 		}
 
-		for i, _ := range packet.Destination {
-			packet.Destination[i] = data[i]
-			packet.Source[i] = data[i+6]
+		packet, err := PacketFromBytes(data[:i])
+		if err != nil {
+			panic(err)
 		}
-
-		packet.EtherType = EtherType(data[12])<<8 | EtherType(data[13])
-		packet.Payload = data[14:i]
 
 		fmt.Println("Got packet:", packet)
 
