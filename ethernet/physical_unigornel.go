@@ -61,21 +61,8 @@ func (nic *miniosNIC) GetMAC() MAC {
 
 func (nic *miniosNIC) sendAll() {
 	for p := range nic.tx {
-		var packet C.struct_eth_packet
-		for i := 0; i < 6; i++ {
-			packet.destination[i] = C.uchar(p.Destination[i])
-		}
-		packet.ether_type = C.uint16_t(p.EtherType)
-		packet.payload_length = C.uint(len(p.Payload))
-		if len(p.Payload) == 0 {
-			packet.payload = nil
-		} else {
-			packet.payload = (*C.uchar)(C.malloc(C.size_t(len(p.Payload))))
-			defer C.free(unsafe.Pointer(packet.payload))
-			C.memcpy(unsafe.Pointer(packet.payload), unsafe.Pointer(&p.Payload[0]), C.size_t(len(p.Payload)))
-		}
-
-		C.send_packet(&packet)
+		data := p.Bytes()
+		C.send_packet(unsafe.Pointer(&data[0]), C.int64_t(len(data)))
 	}
 }
 

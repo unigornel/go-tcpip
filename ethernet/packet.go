@@ -75,6 +75,24 @@ func PacketFromBytes(data []byte) (Packet, error) {
 	return packet, nil
 }
 
+func (packet Packet) Bytes() []byte {
+	data := make([]byte, HeaderSize+len(packet.Payload))
+
+	for i := 0; i < MACLength; i++ {
+		data[i] = packet.Destination[i]
+		data[i+6] = packet.Source[i]
+	}
+
+	data[12] = byte(packet.EtherType >> 8)
+	data[13] = byte(packet.EtherType)
+
+	for i, b := range packet.Payload {
+		data[14+i] = b
+	}
+
+	return data
+}
+
 func (packet Packet) String() string {
 	return fmt.Sprintf(
 		"Packet{%v -> %v, EtherType: %v, %v",
