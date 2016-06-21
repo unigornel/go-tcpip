@@ -8,9 +8,16 @@ package ethernet
 // extern void *malloc(size_t);
 // extern void free(void *);
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
-const maxEthPayloadSize = 1500
+const (
+	ethHeaderSize     = 6 + 6 + 2
+	maxEthPayloadSize = 1500
+	maxEthPacketSize  = ethHeaderSize + maxEthPayloadSize
+)
 
 type miniosNIC struct {
 	tx   chan Packet
@@ -80,27 +87,26 @@ func (nic *miniosNIC) sendAll() {
 
 func (nic *miniosNIC) receiveAll() {
 	for {
-		var packet C.struct_eth_packet
-		packet.payload = (*C.uchar)(C.malloc(C.size_t(maxEthPayloadSize)))
-		packet.payload_length = C.uint(maxEthPayloadSize)
+		var packet Packet
+		data := make([]byte, maxEthPacketSize)
 
-		i := C.receive_packet(&packet)
-		if i != 0 {
+		i := C.receive_packet(unsafe.Pointer(&data[0]), C.int64_t(maxEthPacketSize))
+		if i < ethHeaderSize {
 			panic("could not receive packet")
 		}
 
-		var p Packet
-		for i := 0; i < 6; i++ {
-			p.Source[i] = byte(packet.source[i])
-			p.Destination[i] = byte(packet.destination[i])
+		for i, _ := range packet.Destination {
+			packet.Destination[i] = data[i]
+			packet.Source[i] = data[i+6]
 		}
-		p.EtherType = EtherType(packet.ether_type)
-		p.Payload = make([]byte, int(packet.payload_length))
-		C.memcpy(unsafe.Pointer(&p.Payload[0]), unsafe.Pointer(packet.payload), C.size_t(packet.payload_length))
-		C.free(unsafe.Pointer(packet.payload))
+
+		packet.EtherType = EtherType(data[12])<<8 | EtherType(data[13])
+		packet.Payload = data[14:i]
+
+		fmt.Println("Got packet:", packet)
 
 		select {
-		case nic.rx <- p:
+		case nic.rx <- packet:
 		case <-nic.done:
 			close(nic.rx)
 			return
