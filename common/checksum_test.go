@@ -1,4 +1,4 @@
-package tcpip
+package common
 
 import (
 	"encoding/hex"

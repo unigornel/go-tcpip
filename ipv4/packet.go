@@ -10,7 +10,7 @@ import (
 	"net"
 	"sync/atomic"
 
-	"github.com/unigornel/go-tcpip"
+	"github.com/unigornel/go-tcpip/common"
 )
 
 var (
@@ -122,7 +122,7 @@ func (h Header) CalculateChecksum() uint16 {
 	if err := c.Write(&b); err != nil {
 		panic(err)
 	}
-	return tcpip.Checksum(b.Bytes())
+	return common.Checksum(b.Bytes())
 }
 
 // Check checks whether the IPv4 header is valid.

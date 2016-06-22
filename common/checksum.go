@@ -1,4 +1,4 @@
-package tcpip
+package common
 
 // Checksum will calculate the checksum of a byte slice.
 func Checksum(b []byte) uint16 {
