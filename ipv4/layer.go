@@ -22,12 +22,14 @@ type layer struct {
 
 // NewLayer creates a new instance of the default IPv4 layer.
 func NewLayer(address Address, arp ARP, eth ethernet.Layer) Layer {
-	return &layer{
+	l := &layer{
 		address:  address,
 		arp:      arp,
 		eth:      eth,
 		channels: make(map[Protocol]chan Packet),
 	}
+	go l.run()
+	return l
 }
 
 func (layer *layer) Packets(t Protocol) <-chan Packet {

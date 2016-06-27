@@ -148,7 +148,7 @@ func NewARP(mac ethernet.MAC, ip Address, eth ethernet.Layer) ARP {
 
 // NewCustomARP will create a default ARP interface with a custom configuration.
 func NewCustomARP(mac ethernet.MAC, ip Address, eth ethernet.Layer, expiration, cleanupInterval, queryInterval time.Duration, timeout int) ARP {
-	return &defaultARP{
+	l := &defaultARP{
 		sourceMAC:     mac,
 		sourceIP:      ip,
 		eth:           eth,
@@ -157,6 +157,8 @@ func NewCustomARP(mac ethernet.MAC, ip Address, eth ethernet.Layer, expiration, 
 		timeout:       timeout,
 		requests:      make(map[Address]*pendingARPRequest),
 	}
+	go l.run()
+	return l
 }
 
 func (arp *defaultARP) run() {

@@ -16,9 +16,11 @@ type layer struct {
 
 // NewLayer creates a new instance of the default ICMP layer.
 func NewLayer(ip ipv4.Layer) Layer {
-	return &layer{
+	l := &layer{
 		ip: ip,
 	}
+	go l.run()
+	return l
 }
 
 func (layer *layer) run() {

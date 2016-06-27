@@ -8,11 +8,13 @@ type Layer interface {
 
 // NewLayer will receive packets from a NIC.
 func NewLayer(nic NIC) Layer {
-	return &layer{
+	l := &layer{
 		mac:      nic.GetMAC(),
 		nic:      nic,
 		channels: make(map[EtherType]chan Packet),
 	}
+	go l.run()
+	return l
 }
 
 type layer struct {
