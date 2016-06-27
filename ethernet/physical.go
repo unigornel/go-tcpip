@@ -8,5 +8,6 @@ type NIC interface {
 	Send() chan<- Packet
 	Receive() <-chan Packet
 	GetMAC() MAC
+	Start()
 	Close()
 }

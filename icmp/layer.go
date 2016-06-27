@@ -2,50 +2,43 @@ package icmp
 
 import (
 	"bytes"
-	"log"
 
+	"github.com/unigornel/go-tcpip/common"
 	"github.com/unigornel/go-tcpip/ipv4"
 )
 
-// Layer is an ICMP layer.
 type Layer interface {
-	Bind(ipv4.Demux)
 }
 
-type defaultLayer struct {
-	tx chan<- ipv4.Packet
+type layer struct {
+	ip ipv4.Layer
 }
 
 // NewLayer creates a new instance of the default ICMP layer.
-func NewLayer(tx chan<- ipv4.Packet) Layer {
-	return &defaultLayer{
-		tx: tx,
+func NewLayer(ip ipv4.Layer) Layer {
+	return &layer{
+		ip: ip,
 	}
 }
 
-// Bind will bind the ICMP layer to the IPv4 layer.
-func (icmp *defaultLayer) Bind(demux ipv4.Demux) {
-	demux.SetOutput(ipv4.ProtocolICMP, func(packet ipv4.Packet) {
-		r := bytes.NewReader(packet.Payload)
-		p, err := NewPacket(r)
+func (layer *layer) run() {
+	for packet := range layer.ip.Packets(ipv4.ProtocolICMP) {
+		p, err := NewPacket(bytes.NewReader(packet.Payload))
 		if err != nil {
-			log.Println("Dropping ICMP packet:", err)
-			return
+			continue
 		}
 
 		switch p.Header.Type {
 		case EchoRequestType:
-			go icmp.handleEchoRequest(packet.Source, p)
+			go layer.handleEchoRequest(packet.Source, p)
 		default:
-			log.Println("Dropping ICMP packet with unknown type:", p)
 		}
-	})
+	}
 }
 
-func (icmp *defaultLayer) handleEchoRequest(source ipv4.Address, packet Packet) {
+func (layer *layer) handleEchoRequest(source ipv4.Address, packet Packet) {
 	data := packet.Data.(Echo)
 	reply := NewEchoReply(data.Header.Identifier, data.Header.SequenceNumber, data.Payload)
-	p := ipv4.NewPacketTo(source, ipv4.ProtocolICMP, nil)
-	p.WritePayload(reply)
-	icmp.tx <- p
+	p := ipv4.NewPacketTo(source, ipv4.ProtocolICMP, common.PacketToBytes(reply))
+	layer.ip.Send(p)
 }

@@ -27,10 +27,12 @@ func NewNIC() NIC {
 	nic.rx = make(chan Packet)
 	nic.done = make(chan struct{})
 
+	return nic
+}
+
+func (nic *miniosNIC) Start() {
 	go nic.sendAll()
 	go nic.receiveAll()
-
-	return nic
 }
 
 func (nic *miniosNIC) Close() {

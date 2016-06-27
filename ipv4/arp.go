@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"log"
 	"sync"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 // ARP represents an ARP layer that can convert IPv4 addresses to Ethernet
 // addresses.
 type ARP interface {
-	Bind(ethernet.Demux)
 	Resolve(address Address) (ethernet.MAC, error)
 }
 
@@ -107,7 +105,7 @@ type pendingARPRequest struct {
 type defaultARP struct {
 	sourceMAC     ethernet.MAC
 	sourceIP      Address
-	tx            chan<- ethernet.Packet
+	eth           ethernet.Layer
 	cache         *cache.Cache
 	queryInterval time.Duration
 	timeout       int
@@ -138,9 +136,9 @@ var (
 )
 
 // NewARP will create a default ARP interface with the default configuration.
-func NewARP(mac ethernet.MAC, ip Address, tx chan<- ethernet.Packet) ARP {
+func NewARP(mac ethernet.MAC, ip Address, eth ethernet.Layer) ARP {
 	return NewCustomARP(
-		mac, ip, tx,
+		mac, ip, eth,
 		DefaultARPExpiration,
 		DefaultARPCleanupInterval,
 		DefaultARPQueryInterval,
@@ -149,11 +147,11 @@ func NewARP(mac ethernet.MAC, ip Address, tx chan<- ethernet.Packet) ARP {
 }
 
 // NewCustomARP will create a default ARP interface with a custom configuration.
-func NewCustomARP(mac ethernet.MAC, ip Address, tx chan<- ethernet.Packet, expiration, cleanupInterval, queryInterval time.Duration, timeout int) ARP {
+func NewCustomARP(mac ethernet.MAC, ip Address, eth ethernet.Layer, expiration, cleanupInterval, queryInterval time.Duration, timeout int) ARP {
 	return &defaultARP{
 		sourceMAC:     mac,
 		sourceIP:      ip,
-		tx:            tx,
+		eth:           eth,
 		cache:         cache.New(expiration, cleanupInterval),
 		queryInterval: queryInterval,
 		timeout:       timeout,
@@ -161,13 +159,11 @@ func NewCustomARP(mac ethernet.MAC, ip Address, tx chan<- ethernet.Packet, expir
 	}
 }
 
-func (arp *defaultARP) Bind(demux ethernet.Demux) {
-	demux.SetOutput(ethernet.EtherTypeARP, func(packet ethernet.Packet) {
-		r := bytes.NewReader(packet.Payload)
-		p, err := NewARPPacket(r)
+func (arp *defaultARP) run() {
+	for frame := range arp.eth.Packets(ethernet.EtherTypeARP) {
+		p, err := NewARPPacket(bytes.NewReader(frame.Payload))
 		if err != nil {
-			log.Println("Dropping ARP packet:", err)
-			return
+			continue
 		}
 
 		switch p.Operation {
@@ -175,10 +171,8 @@ func (arp *defaultARP) Bind(demux ethernet.Demux) {
 			go arp.handleRequest(p)
 		case ARPReply:
 			go arp.handleReply(p)
-		default:
-			log.Println("Dropping ARP packet with unknown operation:", p)
 		}
-	})
+	}
 }
 
 func (arp *defaultARP) Resolve(address Address) (ethernet.MAC, error) {
@@ -236,7 +230,7 @@ func (arp *defaultARP) sendARPRequestAndNotify(pending *pendingARPRequest, addre
 
 	flag := false
 	for i := 0; i < arp.timeout; i++ {
-		arp.tx <- p
+		arp.eth.Send(p)
 		select {
 		case <-time.After(arp.queryInterval):
 			continue
@@ -264,7 +258,7 @@ func (arp *defaultARP) handleRequest(request ARPPacket) {
 			EtherType:   ethernet.EtherTypeARP,
 		}
 		p.WritePayload(reply)
-		arp.tx <- p
+		arp.eth.Send(p)
 	}
 }
 
