@@ -254,6 +254,15 @@ func NewPacketTo(to Address, proto Protocol, payload []byte) Packet {
 	return p
 }
 
+func (packet Packet) String() string {
+	return fmt.Sprintf(
+		"Packet{%v -> %v, Protocol: %v, TTL: %v, %v}",
+		packet.Source, packet.Destination,
+		packet.Protocol, packet.TTL,
+		packet.Payload,
+	)
+}
+
 // Write will write a packet to a writer.
 func (p Packet) Write(w io.Writer) error {
 	if err := p.Header.Write(w); err != nil {
