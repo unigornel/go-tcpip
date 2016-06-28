@@ -47,6 +47,7 @@ func (layer *layer) Send(t Packet) error {
 		return err
 	}
 
+	t.Source = layer.address
 	frame := ethernet.Packet{
 		Destination: mac,
 		EtherType:   ethernet.EtherTypeIPv4,
