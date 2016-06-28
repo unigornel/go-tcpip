@@ -117,12 +117,7 @@ func NewHeader(r io.Reader) (Header, error) {
 func (h Header) CalculateChecksum() uint16 {
 	c := h
 	c.Checksum = 0
-
-	var b bytes.Buffer
-	if err := c.Write(&b); err != nil {
-		panic(err)
-	}
-	return common.Checksum(b.Bytes())
+	return common.PacketChecksum(c)
 }
 
 // Check checks whether the IPv4 header is valid.

@@ -16,3 +16,7 @@ func PacketToBytes(w PacketWriter) []byte {
 	}
 	return b.Bytes()
 }
+
+func PacketChecksum(w PacketWriter) uint16 {
+	return Checksum(PacketToBytes(w))
+}
