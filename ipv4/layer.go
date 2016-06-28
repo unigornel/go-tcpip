@@ -48,6 +48,7 @@ func (layer *layer) Send(t Packet) error {
 	}
 
 	t.Source = layer.address
+	t.Checksum = t.CalculateChecksum()
 	frame := ethernet.Packet{
 		Destination: mac,
 		EtherType:   ethernet.EtherTypeIPv4,
