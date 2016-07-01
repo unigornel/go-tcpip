@@ -8,9 +8,10 @@ package ethernet
 // extern void *malloc(size_t);
 // extern void free(void *);
 import "C"
-import "unsafe"
-
-const maxEthPayloadSize = 1500
+import (
+	"fmt"
+	"unsafe"
+)
 
 type miniosNIC struct {
 	tx   chan Packet
@@ -26,10 +27,12 @@ func NewNIC() NIC {
 	nic.rx = make(chan Packet)
 	nic.done = make(chan struct{})
 
+	return nic
+}
+
+func (nic *miniosNIC) Start() {
 	go nic.sendAll()
 	go nic.receiveAll()
-
-	return nic
 }
 
 func (nic *miniosNIC) Close() {
@@ -60,47 +63,29 @@ func (nic *miniosNIC) GetMAC() MAC {
 
 func (nic *miniosNIC) sendAll() {
 	for p := range nic.tx {
-		var packet C.struct_eth_packet
-		for i := 0; i < 6; i++ {
-			packet.destination[i] = C.uchar(p.Destination[i])
-		}
-		packet.ether_type = C.uint16_t(p.EtherType)
-		packet.payload_length = C.uint(len(p.Payload))
-		if len(p.Payload) == 0 {
-			packet.payload = nil
-		} else {
-			packet.payload = (*C.uchar)(C.malloc(C.size_t(len(p.Payload))))
-			defer C.free(unsafe.Pointer(packet.payload))
-			C.memcpy(unsafe.Pointer(packet.payload), unsafe.Pointer(&p.Payload[0]), C.size_t(len(p.Payload)))
-		}
-
-		C.send_packet(&packet)
+		data := p.Bytes()
+		C.send_packet(unsafe.Pointer(&data[0]), C.int64_t(len(data)))
 	}
 }
 
 func (nic *miniosNIC) receiveAll() {
 	for {
-		var packet C.struct_eth_packet
-		packet.payload = (*C.uchar)(C.malloc(C.size_t(maxEthPayloadSize)))
-		packet.payload_length = C.uint(maxEthPayloadSize)
+		data := make([]byte, MaxPacketSize)
 
-		i := C.receive_packet(&packet)
-		if i != 0 {
+		i := C.receive_packet(unsafe.Pointer(&data[0]), C.int64_t(MaxPacketSize))
+		if i < 0 {
 			panic("could not receive packet")
 		}
 
-		var p Packet
-		for i := 0; i < 6; i++ {
-			p.Source[i] = byte(packet.source[i])
-			p.Destination[i] = byte(packet.destination[i])
+		packet, err := PacketFromBytes(data[:i])
+		if err != nil {
+			panic(err)
 		}
-		p.EtherType = EtherType(packet.ether_type)
-		p.Payload = make([]byte, int(packet.payload_length))
-		C.memcpy(unsafe.Pointer(&p.Payload[0]), unsafe.Pointer(packet.payload), C.size_t(packet.payload_length))
-		C.free(unsafe.Pointer(packet.payload))
+
+		fmt.Println("Got packet:", packet)
 
 		select {
-		case nic.rx <- p:
+		case nic.rx <- packet:
 		case <-nic.done:
 			close(nic.rx)
 			return

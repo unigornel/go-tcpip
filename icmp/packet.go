@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/unigornel/go-tcpip"
+	"github.com/unigornel/go-tcpip/common"
 )
 
 // Type is the type of the ICMP packet.
@@ -114,7 +114,7 @@ func (p Packet) WithChecksum() Packet {
 	if err := c.Write(&b); err != nil {
 		panic(err)
 	}
-	c.Header.Checksum = tcpip.Checksum(b.Bytes())
+	c.Header.Checksum = common.Checksum(b.Bytes())
 	return c
 }
 

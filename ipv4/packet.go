@@ -10,7 +10,7 @@ import (
 	"net"
 	"sync/atomic"
 
-	"github.com/unigornel/go-tcpip"
+	"github.com/unigornel/go-tcpip/common"
 )
 
 var (
@@ -117,12 +117,7 @@ func NewHeader(r io.Reader) (Header, error) {
 func (h Header) CalculateChecksum() uint16 {
 	c := h
 	c.Checksum = 0
-
-	var b bytes.Buffer
-	if err := c.Write(&b); err != nil {
-		panic(err)
-	}
-	return tcpip.Checksum(b.Bytes())
+	return common.PacketChecksum(c)
 }
 
 // Check checks whether the IPv4 header is valid.
@@ -252,6 +247,15 @@ func NewPacketTo(to Address, proto Protocol, payload []byte) Packet {
 	p.Header.TotalLength = uint16(20 + len(payload))
 	p.Payload = payload
 	return p
+}
+
+func (packet Packet) String() string {
+	return fmt.Sprintf(
+		"Packet{%v -> %v, Protocol: %v, TTL: %v, %v}",
+		packet.Source, packet.Destination,
+		packet.Protocol, packet.TTL,
+		packet.Payload,
+	)
 }
 
 // Write will write a packet to a writer.
