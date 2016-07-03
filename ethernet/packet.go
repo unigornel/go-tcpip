@@ -1,10 +1,8 @@
 package ethernet
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
 )
 
 // MACLength is 48-bits or 6 bytes
@@ -57,6 +55,7 @@ type Packet struct {
 	Payload     []byte
 }
 
+// PacketFromBytes constructs an ethernet packet from a byte slice.
 func PacketFromBytes(data []byte) (Packet, error) {
 	var packet Packet
 
@@ -75,6 +74,7 @@ func PacketFromBytes(data []byte) (Packet, error) {
 	return packet, nil
 }
 
+// Bytes converts an ethernet packet to a byte slice.
 func (packet Packet) Bytes() []byte {
 	data := make([]byte, HeaderSize+len(packet.Payload))
 
@@ -99,20 +99,4 @@ func (packet Packet) String() string {
 		packet.Source, packet.Destination,
 		packet.EtherType, packet.Payload,
 	)
-}
-
-// PayloadWriter can write an Ethernet packet payload.
-type PayloadWriter interface {
-	Write(io.Writer) error
-}
-
-// WritePayload will set the payload using a PaylaodWriter.
-//
-// If the PayloadWriter returns an error, this function panics.
-func (packet *Packet) WritePayload(writer PayloadWriter) {
-	b := bytes.NewBuffer(nil)
-	if err := writer.Write(b); err != nil {
-		panic(err)
-	}
-	packet.Payload = b.Bytes()
 }

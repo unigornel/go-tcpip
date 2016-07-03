@@ -1,7 +1,6 @@
 package ipv4
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -259,29 +258,10 @@ func (packet Packet) String() string {
 }
 
 // Write will write a packet to a writer.
-func (p Packet) Write(w io.Writer) error {
-	if err := p.Header.Write(w); err != nil {
+func (packet Packet) Write(w io.Writer) error {
+	if err := packet.Header.Write(w); err != nil {
 		return err
 	}
-	_, err := w.Write(p.Payload)
+	_, err := w.Write(packet.Payload)
 	return err
-}
-
-// PayloadWriter can write a IPv4 packet payload.
-type PayloadWriter interface {
-	Write(io.Writer) error
-}
-
-// WritePayload will set the payload using a PayloadWriter.
-//
-// This function also updates the TotalLength field of the packet.
-//
-// If the PayloadWriter returns an error, this function panics.
-func (packet *Packet) WritePayload(writer PayloadWriter) {
-	b := bytes.NewBuffer(nil)
-	if err := writer.Write(b); err != nil {
-		panic(err)
-	}
-	packet.Payload = b.Bytes()
-	packet.TotalLength = uint16(packet.IHL)*4 + uint16(len(packet.Payload))
 }
