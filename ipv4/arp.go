@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/unigornel/go-tcpip/common"
 	"github.com/unigornel/go-tcpip/ethernet"
 )
 
@@ -224,11 +225,12 @@ func (arp *defaultARP) arpResolve(address Address) (mac ethernet.MAC, err error)
 }
 
 func (arp *defaultARP) sendARPRequestAndNotify(pending *pendingARPRequest, address Address) {
+	req := NewARPRequest(arp.sourceMAC, arp.sourceIP, address)
 	p := ethernet.Packet{
 		Destination: ethernet.Broadcast,
 		EtherType:   ethernet.EtherTypeARP,
+		Payload:     common.PacketToBytes(req),
 	}
-	p.WritePayload(NewARPRequest(arp.sourceMAC, arp.sourceIP, address))
 
 	flag := false
 	for i := 0; i < arp.timeout; i++ {
@@ -258,8 +260,8 @@ func (arp *defaultARP) handleRequest(request ARPPacket) {
 		p := ethernet.Packet{
 			Destination: request.SenderHardwareAddress,
 			EtherType:   ethernet.EtherTypeARP,
+			Payload:     common.PacketToBytes(reply),
 		}
-		p.WritePayload(reply)
 		arp.eth.Send(p)
 	}
 }

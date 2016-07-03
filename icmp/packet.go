@@ -1,7 +1,6 @@
 package icmp
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -71,7 +70,7 @@ func NewPacket(r io.Reader) (packet Packet, err error) {
 
 // NewEchoRequest creates a new echo request packet.
 func NewEchoRequest(ident, seq uint16, payload []byte) Packet {
-	return Packet{
+	p := Packet{
 		Header: Header{Type: EchoRequestType, Code: EchoRequestCode},
 		Data: Echo{
 			Header: EchoHeader{
@@ -80,12 +79,14 @@ func NewEchoRequest(ident, seq uint16, payload []byte) Packet {
 			},
 			Payload: payload,
 		},
-	}.WithChecksum()
+	}
+	p.Header.Checksum = common.PacketChecksum(p)
+	return p
 }
 
 // NewEchoReply creates a new echo reply packet.
 func NewEchoReply(ident, seq uint16, payload []byte) Packet {
-	return Packet{
+	p := Packet{
 		Header: Header{Type: EchoReplyType, Code: EchoReplyCode},
 		Data: Echo{
 			Header: EchoHeader{
@@ -94,7 +95,9 @@ func NewEchoReply(ident, seq uint16, payload []byte) Packet {
 			},
 			Payload: payload,
 		},
-	}.WithChecksum()
+	}
+	p.Header.Checksum = common.PacketChecksum(p)
+	return p
 }
 
 // Write will write a packet to a writer.
@@ -103,19 +106,6 @@ func (p Packet) Write(w io.Writer) error {
 		return err
 	}
 	return p.Data.Write(w)
-}
-
-// WithChecksum creates a copy of the packet with the correct checksum.
-func (p Packet) WithChecksum() Packet {
-	c := p
-	c.Header.Checksum = 0
-
-	var b bytes.Buffer
-	if err := c.Write(&b); err != nil {
-		panic(err)
-	}
-	c.Header.Checksum = common.Checksum(b.Bytes())
-	return c
 }
 
 // EchoHeader is the header of echo request/reply packets.
