@@ -55,6 +55,7 @@ type Packet struct {
 	Payload     []byte
 }
 
+// PacketFromBytes constructs an ethernet packet from a byte slice.
 func PacketFromBytes(data []byte) (Packet, error) {
 	var packet Packet
 
@@ -73,6 +74,7 @@ func PacketFromBytes(data []byte) (Packet, error) {
 	return packet, nil
 }
 
+// Bytes converts an ethernet packet to a byte slice.
 func (packet Packet) Bytes() []byte {
 	data := make([]byte, HeaderSize+len(packet.Payload))
 

@@ -79,6 +79,7 @@ func NewARPRequest(senderMAC ethernet.MAC, senderIP, targetIP Address) ARPPacket
 	}
 }
 
+// NewARPReply constructs an ARP reply packet.
 func NewARPReply(senderMAC, targetMAC ethernet.MAC, senderIP, targetIP Address) ARPPacket {
 	return ARPPacket{
 		HardwareType:          ARPHardwareEthernet,

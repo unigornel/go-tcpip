@@ -37,6 +37,7 @@ type Header struct {
 }
 
 var (
+	// ErrUnsupportedICMPPacket is used for unsupported ICMP packet types.
 	ErrUnsupportedICMPPacket = errors.New("unsupported ICMP packet")
 )
 

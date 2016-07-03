@@ -7,6 +7,7 @@ import (
 	"github.com/unigornel/go-tcpip/ipv4"
 )
 
+// Layer is the ICMP layer.
 type Layer interface {
 }
 
