@@ -234,14 +234,15 @@ func (arp *defaultARP) sendARPRequestAndNotify(pending *pendingARPRequest, addre
 	}
 
 	flag := false
+send:
 	for i := 0; i < arp.timeout; i++ {
 		arp.eth.Send(p)
 		select {
 		case <-time.After(arp.queryInterval):
-			continue
+			continue send
 		case <-pending.gotReply:
 			flag = true
-			break
+			break send
 		}
 	}
 
