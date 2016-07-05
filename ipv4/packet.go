@@ -29,6 +29,9 @@ var (
 // Address is an IPv4 address.
 type Address [4]byte
 
+// Broadcast is the IPv4 broadcast address.
+var Broadcast = Address([4]byte{255, 255, 255, 255})
+
 // NewAddress creates a new address from a string.
 //
 // If the string is invalid, NewAddress returns false.
@@ -48,6 +51,25 @@ func NewAddress(s string) (Address, bool) {
 
 func (a Address) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", a[0], a[1], a[2], a[3])
+}
+
+// And will perform the logical AND operation on two IP addresses.
+func (a Address) And(b Address) Address {
+	var c Address
+	for i, _ := range a {
+		c[i] = a[i] & b[i]
+	}
+	return c
+}
+
+// Equals will compare two IP addresses for equality.
+func (a Address) Equals(b Address) bool {
+	for i, _ := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // Bytes copies an address to a new byte slice.
