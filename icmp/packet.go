@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/unigornel/go-tcpip/common"
+	"github.com/unigornel/go-tcpip/ipv4"
 )
 
 // Type is the type of the ICMP packet.
@@ -50,6 +51,7 @@ type Data interface {
 type Packet struct {
 	Header Header
 	Data   Data
+	Source ipv4.Address
 }
 
 // NewPacket will read a packet from a reader.
