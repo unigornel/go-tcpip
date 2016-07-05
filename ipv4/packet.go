@@ -53,6 +53,25 @@ func (a Address) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", a[0], a[1], a[2], a[3])
 }
 
+// And will perform the logical AND operation on two IP addresses.
+func (a Address) And(b Address) Address {
+	var c Address
+	for i, _ := range a {
+		c[i] = a[i] & b[i]
+	}
+	return c
+}
+
+// Equals will compare two IP addresses for equality.
+func (a Address) Equals(b Address) bool {
+	for i, _ := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // Bytes copies an address to a new byte slice.
 func (a Address) Bytes() []byte {
 	s := make([]byte, len(a))
