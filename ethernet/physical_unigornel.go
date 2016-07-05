@@ -8,10 +8,7 @@ package ethernet
 // extern void *malloc(size_t);
 // extern void free(void *);
 import "C"
-import (
-	"fmt"
-	"unsafe"
-)
+import "unsafe"
 
 type miniosNIC struct {
 	tx   chan Packet
@@ -81,8 +78,6 @@ func (nic *miniosNIC) receiveAll() {
 		if err != nil {
 			panic(err)
 		}
-
-		fmt.Println("Got packet:", packet)
 
 		select {
 		case nic.rx <- packet:

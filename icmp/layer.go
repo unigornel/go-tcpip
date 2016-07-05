@@ -9,19 +9,37 @@ import (
 
 // Layer is the ICMP layer.
 type Layer interface {
+	Packets(p Type) <-chan Packet
+	Send(p Packet) error
 }
 
 type layer struct {
-	ip ipv4.Layer
+	ip       ipv4.Layer
+	channels map[Type]chan Packet
 }
 
 // NewLayer creates a new instance of the default ICMP layer.
 func NewLayer(ip ipv4.Layer) Layer {
 	l := &layer{
-		ip: ip,
+		ip:       ip,
+		channels: make(map[Type]chan Packet),
 	}
 	go l.run()
 	return l
+}
+
+func (layer *layer) Packets(t Type) <-chan Packet {
+	c, ok := layer.channels[t]
+	if !ok {
+		c = make(chan Packet)
+		layer.channels[t] = c
+	}
+	return c
+}
+
+func (layer *layer) Send(p Packet) error {
+	packet := ipv4.NewPacketTo(p.Address, ipv4.ProtocolICMP, common.PacketToBytes(p))
+	return layer.ip.Send(packet)
 }
 
 func (layer *layer) run() {
@@ -31,17 +49,27 @@ func (layer *layer) run() {
 			continue
 		}
 
+		p.Address = packet.Source
+
 		switch p.Header.Type {
 		case EchoRequestType:
-			go layer.handleEchoRequest(packet.Source, p)
+			go layer.handleEchoRequest(p)
 		default:
+			c := layer.channels[p.Header.Type]
+			if c != nil {
+				c <- p
+			}
 		}
+	}
+
+	for _, c := range layer.channels {
+		close(c)
 	}
 }
 
-func (layer *layer) handleEchoRequest(source ipv4.Address, packet Packet) {
+func (layer *layer) handleEchoRequest(packet Packet) {
 	data := packet.Data.(Echo)
 	reply := NewEchoReply(data.Header.Identifier, data.Header.SequenceNumber, data.Payload)
-	p := ipv4.NewPacketTo(source, ipv4.ProtocolICMP, common.PacketToBytes(reply))
-	layer.ip.Send(p)
+	reply.Address = packet.Address
+	layer.Send(reply)
 }
