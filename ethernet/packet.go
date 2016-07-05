@@ -15,8 +15,14 @@ func (mac MAC) String() string {
 	return fmt.Sprintf("%x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5])
 }
 
-// Broadcast is the Ethernet broadcast address
-var Broadcast = MAC([6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})
+var (
+	// Broadcast is the Ethernet broadcast address
+	Broadcast = MAC([6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})
+
+	// MulticastIPv4 is the MAC address to use for IPv4 multicast
+	// IP addresses, as defined in RFC1112.
+	MulticastIPv4 = MAC([6]byte{0x01, 0x00, 0x5E, 0x00, 0x00, 0x00})
+)
 
 // EtherType is either the Ethernet packet type or the Eternet packet length.
 type EtherType uint16
