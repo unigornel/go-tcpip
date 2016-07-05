@@ -15,16 +15,16 @@ type Layer interface {
 
 type layer struct {
 	address  Address
-	arp      ARP
+	router   Router
 	eth      ethernet.Layer
 	channels map[Protocol]chan Packet
 }
 
 // NewLayer creates a new instance of the default IPv4 layer.
-func NewLayer(address Address, arp ARP, eth ethernet.Layer) Layer {
+func NewLayer(address Address, router Router, eth ethernet.Layer) Layer {
 	l := &layer{
 		address:  address,
-		arp:      arp,
+		router:   router,
 		eth:      eth,
 		channels: make(map[Protocol]chan Packet),
 	}
@@ -42,7 +42,7 @@ func (layer *layer) Packets(t Protocol) <-chan Packet {
 }
 
 func (layer *layer) Send(t Packet) error {
-	mac, err := layer.arp.Resolve(t.Destination)
+	mac, err := layer.router.Resolve(t.Destination)
 	if err != nil {
 		return err
 	}
