@@ -25,14 +25,16 @@ type router struct {
 	arp     ARP
 	address Address
 	netmask Address
-	gateway Address
+	gateway *Address
 }
 
 // NewRouter creates a default router.
 //
 // ARP is used to resolve local addresses. Otherwise, the MAC address of
 // the gateway is returned.
-func NewRouter(arp ARP, address, netmask, gateway Address) Router {
+//
+// Specifying a gateway is optional.
+func NewRouter(arp ARP, address, netmask Address, gateway *Address) Router {
 	return &router{
 		arp:     arp,
 		address: address,
@@ -54,11 +56,13 @@ func (r *router) Resolve(address Address) (mac ethernet.MAC, err error) {
 		mac[4] &= address[2]
 		mac[3] &= (address[1] & 0x7F)
 
-	} else {
-		mac, err = r.arp.Resolve(r.gateway)
+	} else if r.gateway != nil {
+		mac, err = r.arp.Resolve(*r.gateway)
 		if err == ErrARPTimeout {
 			err = ErrNoRouteToDestinationAddress
 		}
+	} else {
+		err = ErrNoRouteToDestinationAddress
 	}
 
 	return
