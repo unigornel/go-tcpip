@@ -29,6 +29,9 @@ var (
 // Address is an IPv4 address.
 type Address [4]byte
 
+// Broadcast is the IPv4 broadcast address.
+var Broadcast = Address([4]byte{255, 255, 255, 255})
+
 // NewAddress creates a new address from a string.
 //
 // If the string is invalid, NewAddress returns false.
