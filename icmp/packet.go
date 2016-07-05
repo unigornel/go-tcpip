@@ -51,7 +51,9 @@ type Data interface {
 type Packet struct {
 	Header Header
 	Data   Data
-	Source ipv4.Address
+
+	// Address is either the destination or source address.
+	Address ipv4.Address
 }
 
 // NewPacket will read a packet from a reader.

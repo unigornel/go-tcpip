@@ -10,6 +10,7 @@ import (
 // Layer is the ICMP layer.
 type Layer interface {
 	Packets(p Type) <-chan Packet
+	Send(p Packet) error
 }
 
 type layer struct {
@@ -35,6 +36,11 @@ func (layer *layer) Packets(t Type) <-chan Packet {
 	return c
 }
 
+func (layer *layer) Send(p Packet) error {
+	packet := ipv4.NewPacketTo(p.Address, ipv4.ProtocolICMP, common.PacketToBytes(p))
+	return layer.ip.Send(packet)
+}
+
 func (layer *layer) run() {
 	for packet := range layer.ip.Packets(ipv4.ProtocolICMP) {
 		p, err := NewPacket(bytes.NewReader(packet.Payload))
@@ -42,7 +48,7 @@ func (layer *layer) run() {
 			continue
 		}
 
-		p.Source = packet.Source
+		p.Address = packet.Source
 
 		switch p.Header.Type {
 		case EchoRequestType:
@@ -63,6 +69,6 @@ func (layer *layer) run() {
 func (layer *layer) handleEchoRequest(packet Packet) {
 	data := packet.Data.(Echo)
 	reply := NewEchoReply(data.Header.Identifier, data.Header.SequenceNumber, data.Payload)
-	p := ipv4.NewPacketTo(packet.Source, ipv4.ProtocolICMP, common.PacketToBytes(reply))
-	layer.ip.Send(p)
+	reply.Address = packet.Address
+	layer.Send(reply)
 }
