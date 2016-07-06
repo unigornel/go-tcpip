@@ -87,6 +87,9 @@ type Protocol uint8
 const (
 	// ProtocolICMP is used for the ICMP protocol.
 	ProtocolICMP = 1
+
+	// ProtocolUDP is used for the UDP protocol.
+	ProtocolUDP = 17
 )
 
 // Header is the logical version of an IPv4 header.
