@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/unigornel/go-tcpip/common"
+	"github.com/unigornel/go-tcpip/ipv4"
 )
 
 var (
@@ -42,6 +43,9 @@ func (h Header) Write(w io.Writer) error {
 type Packet struct {
 	Header
 	Payload []byte
+
+	// Address is either the source or destination address
+	Address ipv4.Address
 }
 
 // NewPacket reads a packet from a reader.
